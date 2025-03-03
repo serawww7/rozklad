@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Розклад</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h2>Розклад на {{ date or 'всі дати' }}</h2>
+    
+    <form method="GET" action="/">
+        <label for="date">Дата:</label>
+        <input type="date" id="date" name="date" value="{{ date or '' }}">
+        
+        <label for="group">Група:</label>
+        <select id="group" name="group">
+            <option value="">Всі групи</option>
+            {% for g in groups %}
+            <option value="{{ g }}" {% if group == g %}selected{% endif %}>{{ g }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="teacher">Викладач:</label>
+        <input type="text" id="teacher" name="teacher" value="{{ teacher or '' }}" placeholder="Введіть ім'я викладача">
+        
+        <button type="submit">Фільтрувати</button>
+    </form>
+    
+    <table border="1">
+        <tr>
+            <th>Група</th>
+            <th>Пара</th>
+            <th>Предмет</th>
+            <th>Викладач</th>
+        </tr>
+        {% for row in schedule %}
+        <tr>
+            <td>{{ row[0] }}</td>
+            <td>{{ row[3] }}</td>
+            <td>{{ row[1] }}</td>
+            <td>{{ row[2] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
