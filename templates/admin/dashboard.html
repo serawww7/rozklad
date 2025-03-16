@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Розклад занять</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: #fff;
+        }
+        .admin-controls {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #f8f9fa;
+            padding: 8px;
+            border-bottom: 1px solid #dee2e6;
+            z-index: 1000;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            font-size: 13px;
+        }
+        .admin-controls input,
+        .admin-controls select,
+        .admin-controls button {
+            padding: 4px 8px;
+            font-size: 13px;
+        }
+        .schedule-container {
+            margin-top: 50px;
+            padding: 10px;
+            overflow-x: auto;
+        }
+        .schedule-table {
+            border-collapse: collapse;
+            margin: 0 auto;
+        }
+        .schedule-table td,
+        .schedule-table th {
+            border: 1px solid #000;
+            padding: 0;
+            font-size: 12px;
+        }
+        .schedule-table th {
+            background-color: #CCFFCC;
+            font-weight: bold;
+            text-align: center;
+            height: 18px;
+            line-height: 18px;
+        }
+        .subject-cell {
+            width: 85px;
+            padding: 0;
+            background: #fff;
+            position: relative;
+        }
+        .row-number {
+            position: absolute;
+            left: 2px;
+            top: 1px;
+            font-size: 9px;
+            color: #666;
+        }
+        .room-cell {
+            width: 18px;
+            height: 18px;
+            padding: 0;
+            text-align: center;
+            background: #fff;
+        }
+        .subject-select {
+            width: 100%;
+            height: 18px;
+            border: none;
+            background: transparent;
+            font-size: 11px;
+            padding: 0 2px;
+            padding-left: 12px;
+        }
+        .room-input {
+            width: 18px;
+            height: 18px;
+            border: none;
+            text-align: center;
+            font-size: 11px;
+            padding: 0;
+        }
+        .btn-logout {
+            margin-left: auto;
+            padding: 4px 8px;
+            background: #dc3545;
+            color: white;
+            text-decoration: none;
+            border-radius: 3px;
+            font-size: 13px;
+        }
+        .date-header {
+            text-align: center;
+            padding: 8px;
+            font-size: 13px;
+            font-weight: bold;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-controls">
+<label for="loadDate">Завантажити розклад з дати:</label>
+<input type="date" id="loadDate">
+<button onclick="loadSchedule()" style="
+    margin-top: 10px; 
+    padding: 8px 15px; 
+    background: #007bff; 
+    color: white; 
+    border: none; 
+    cursor: pointer; 
+    font-size: 14px;">
+    Завантажити
+</button>
+
+        <a href="{{ url_for('admin_logout') }}" class="btn-logout">Вийти</a>
+    </div>
+
+    <div class="date-header">
+        {{ current_date }}
+    </div>
+
+    <div class="schedule-container">
+        <table class="schedule-table">
+            <!-- Row 1: First set of groups -->
+            <tr>
+                <th colspan="2">А-11</th>
+                <th colspan="2">М-11</th>
+                <th colspan="2">Е-11</th>
+                <th colspan="2">Е-12</th>
+                <th colspan="2">Е-21</th>
+                <th colspan="2">Е-31</th>
+                <th colspan="2">Е-22</th>
+            </tr>
+            {% for row in range(6) %}
+            <tr>
+                {% for group_id in ['A11', 'M11', 'E11', 'E12', 'E21', 'E31', 'E22'] %}
+                <td class="subject-cell">
+                    <span class="row-number">{{ row + 1 }}</span>
+                    <select class="subject-select"
+                            data-group="{{ group_id }}"
+                            data-row="{{ row + 1 }}"
+                            onchange="checkTeacherAvailability(this)">
+                        <option value="">-</option>
+                        {% for subject in subjects %}
+                            <option value="{{ subject.id }}"
+                                {% if schedule.get(group_id, {}).get(row + 1) == subject.id %}selected{% endif %}>
+                                {{ subject.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td class="room-cell">
+                    <input type="text" class="room-input" maxlength="3">
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+
+            <!-- Row 2: Second set of groups -->
+            <tr>
+                <th colspan="2">А-12</th>
+                <th colspan="2">Т-21 М1</th>
+                <th colspan="2">Т-31</th>
+                <th colspan="2">Ф-12</th>
+                <th colspan="2">М-21</th>
+                <th colspan="2">М-12</th>
+                <th colspan="2">Т-21 Ф1</th>
+            </tr>
+            {% for row in range(6) %}
+            <tr>
+                {% for group_id in ['A12', 'T21M1', 'T31', 'F12', 'M21', 'M12', 'T21F1'] %}
+                <td class="subject-cell">
+                    <span class="row-number">{{ row + 1 }}</span>
+                    <select class="subject-select"
+                            data-group="{{ group_id }}"
+                            data-row="{{ row + 1 }}"
+                            onchange="checkTeacherAvailability(this)">
+                        <option value="">-</option>
+                        {% for subject in subjects %}
+                            <option value="{{ subject.id }}"
+                                {% if schedule.get(group_id, {}).get(row + 1) == subject.id %}selected{% endif %}>
+                                {{ subject.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td class="room-cell">
+                    <input type="text" class="room-input" maxlength="3">
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+
+            <!-- Row 3: Third set of groups -->
+            <tr>
+                <th colspan="2">А-31</th>
+                <th colspan="2">А-22</th>
+                <th colspan="2">Т-31</th>
+                <th colspan="2">М-31</th>
+                <th colspan="2"></th>
+                <th colspan="2"></th>
+                <th colspan="2"></th>
+            </tr>
+            {% for row in range(6) %}
+            <tr>
+                {% for group_id in ['A31', 'A22', 'T31', 'M31', '', '', ''] %}
+                <td class="subject-cell">
+                    <span class="row-number">{{ row + 1 }}</span>
+                    {% if group_id %}
+                    <select class="subject-select"
+                            data-group="{{ group_id }}"
+                            data-row="{{ row + 1 }}"
+                            onchange="checkTeacherAvailability(this)">
+                        <option value="">-</option>
+                        {% for subject in subjects %}
+                            <option value="{{ subject.id }}"
+                                {% if schedule.get(group_id, {}).get(row + 1) == subject.id %}selected{% endif %}>
+                                {{ subject.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    {% endif %}
+                </td>
+                <td class="room-cell">
+                    {% if group_id %}
+                    <input type="text" class="room-input" maxlength="3">
+                    {% endif %}
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </table>
+        <label for="scheduleDate">Дата розкладу:</label>
+<input type="date" id="scheduleDate" value="{{ current_date }}">
+
+<button id="saveSchedule" onclick="saveSchedule()" style="
+    margin-top: 10px; 
+    padding: 8px 15px; 
+    background: #28a745; 
+    color: white; 
+    border: none; 
+    cursor: pointer; 
+    font-size: 14px;">
+    Зберегти
+</button>
+
+
+
+
+    </div>
+
+<script>
+    function saveSchedule() {
+        let scheduleData = [];
+        let selectedDate = document.getElementById("currentDate").value; // Отримуємо вибрану дату
+
+        if (!selectedDate) {
+            alert("Будь ласка, оберіть дату!");
+            return;
+        }
+
+        document.querySelectorAll(".subject-select").forEach(select => {
+            let groupId = select.dataset.group;
+            let lessonNumber = select.dataset.row;
+            let subjectId = select.value;
+
+            if (subjectId) {  // Перевіряємо, чи вибрано предмет
+                scheduleData.push({
+                    group_id: groupId,
+                    lesson_number: lessonNumber,
+                    subject_id: subjectId,
+                    date: selectedDate  // Додаємо дату у кожен запис
+                });
+            }
+        });
+
+        fetch("/admin/save-schedule", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ schedule: scheduleData })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert("Розклад успішно збережено!");
+            } else {
+                alert("Помилка при збереженні: " + (data.error || "Невідома помилка"));
+            }
+        })
+        .catch(error => {
+            console.error("Помилка при відправці даних:", error);
+            alert("Помилка при збереженні розкладу!");
+        });
+    }
+</script>
+
+
+</body>
+</html>
