@@ -1,0 +1,17 @@
+name: Supabase Keep-Alive
+
+on:
+  schedule:
+    - cron: "0 6 * * 0" # Щонеділі о 06:00 UTC
+  workflow_dispatch:
+
+jobs:
+  keep_alive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install PostgreSQL client
+        run: sudo apt-get install -y postgresql-client
+
+      - name: Ping Supabase
+        run: |
+          psql "${{ secrets.SUPABASE_DB_URL }}" -c "SELECT NOW();"
