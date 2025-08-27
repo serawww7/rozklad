@@ -1,0 +1,37 @@
+name: Supabase Maintenance
+
+on:
+  schedule:
+    # 03:00 UTC щодня - робимо бекап
+    - cron: "0 3 * * *"
+    # Неділя 06:00 UTC - робимо "пінг", щоб не засинав
+    - cron: "0 6 * * 0"
+  workflow_dispatch: # дозволяє запускати вручну
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 3 * * *'
+    steps:
+      - name: Install PostgreSQL client
+        run: sudo apt-get install -y postgresql-client
+
+      - name: Dump database
+        run: |
+          pg_dump --clean --if-exists --no-owner \
+            --dbname="${{ secrets.SUPABASE_DB_URL }}" \
+            > backup.sql
+
+      - name: Upload to GitHub Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-backup
+          path: backup.sql
+
+  keep_alive:
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 6 * * 0'
+    steps:
+      - name: Ping Supabase
+        run: |
+          psql "${{ secrets.SUPABASE_DB_URL }}" -c "SELECT NOW();"
